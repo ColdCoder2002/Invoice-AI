@@ -3,6 +3,9 @@ import cors from 'cors';
 import errorMiddleware from './middleware/error.middleware.js';
 import healthRouter from './routes/health.routes.js'
 import ApiError from './utils/ApiError.js';
+import User from './models/user.model.js';
+import asyncHandler from './utils/asyncHandler.js';
+import ApiResponse from './utils/ApiResponse.js';
 
 
 const app = express();
@@ -15,7 +18,19 @@ app.use(express.json());
 
 
 
-app.use('/api/v1/health', healthRouter);
+//app.use('/api/v1/health', healthRouter);
+app.get('/api/v1/test-user', asyncHandler(async (req, res) => {
+    const user = await User.create({
+        name: 'Bhaskar',
+        email: 'bhaskar2@test.com',
+        password: 'test1234',
+        role:'owner'
+    })
+    res.status(201).json(
+        new ApiResponse(201, 'User created!', user)
+    )
+}))
+
 
 
 
