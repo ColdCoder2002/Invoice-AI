@@ -19,15 +19,44 @@ app.use(express.json());
 
 
 //app.use('/api/v1/health', healthRouter);
-app.get('/api/v1/test-user', asyncHandler(async (req, res) => {
-    const user = await User.create({
-        name: 'Bhaskar',
-        email: 'bhaskar2@test.com',
-        password: 'test1234',
-        role:'owner'
-    })
-    res.status(201).json(
-        new ApiResponse(201, 'User created!', user)
+app.get('/api/v1/test-users', asyncHandler(async (req, res) => {
+    // const user = await User.create({
+    //     name: 'Bhaskar',
+    //     email: 'bhaskar2@test.com',
+    //     password: 'test1234',
+    //     role:'owner'
+    // })
+    const users = await User.find().select('-password')
+
+    res.status(200).json(
+        new ApiResponse(200, 'User created!', users)
+    )
+}))
+
+//Test-2
+app.get('/api/v1/test-find', asyncHandler(async (req, res) => {
+    const user = await User.findOne({ email: 'bhaskar2@test.com' })
+    if (!user) {
+        throw new ApiError(404, 'User not found!')
+    }
+    res.status(200).json(
+        new ApiResponse(200, 'User fetched!', user)
+    )
+}))
+
+
+//Test-3
+app.delete('/api/v1/test-delete/:id', asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    //const parseID = parseInt(id)
+    const user = await User.findByIdAndDelete(id);
+
+    if (!user) {
+        throw new ApiError(404, 'User not found!')
+    }
+
+    res.status(200).json(
+        new ApiResponse(200, 'User deleted!', null)
     )
 }))
 
