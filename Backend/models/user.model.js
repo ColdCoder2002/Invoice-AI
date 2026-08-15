@@ -1,4 +1,8 @@
-import mongoose from "mongoose"
+import mongoose, { Schema } from "mongoose";
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+
 
 const userSchema = new Schema(
   {
@@ -10,6 +14,33 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 )
+
+
+// "pre" hook — document save hone se PEHLE ye function chalega
+userSchema.pre("save", async function () {
+  // agar password change/naya nahi hua (jaise sirf 'name' update ho raha hai),
+  // toh dobara hash mat karo — warna already-hashed password ko fir se hash kar dega (bug!)
+
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 10)
+})
+
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+    { _id: this._id, email: this.email },
+    process.env.ACCESS_TOKEN_SECRET,
+    {expiresIn:process.env.ACCESS_TOKEN_EXPIRY}
+  )
+}
+
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    { _id: this._id },
+    process.env.REFRESH_TOKEN_SECRET,
+    {expiresIn:process.env.REFRESH_TOKEN_EXPIRY}
+  )
+}
+
 
 const User = mongoose.model("User", userSchema)
 
