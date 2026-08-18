@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
@@ -47,8 +48,8 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-  const { userId } = req.body;
-  await User.findByIdAndUpdate(userId, { $unset: { refreshToken: 1 } });
+  
+  await User.findByIdAndUpdate(req.user._id, { $unset: { refreshToken: 1 } });
 
   res
     .status(200)
@@ -57,4 +58,40 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Logout Successful"));
 });
 
-export { registerUser, loginUser, logoutUser };
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken = req.cookies?.refreshToken;
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized - no refresh token")
+    }
+
+    let decoded;
+    try {
+        decoded = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+    } catch (error) {
+        if (error.name === "TokenExpiredError") {
+            throw new ApiError(401, "Refresh Token expired, please login again")
+        }
+        throw new ApiError(401, "Invalid refresh token")
+    }
+
+    const user = await User.findById(decoded._id).select("+refreshToken")
+    if (!user) throw new ApiError(401, "User not found")
+    
+    if (incomingRefreshToken !== user.refreshToken) {
+        throw new ApiError(401, "Refresh token mismatch - please login again")
+    }
+
+    const newAccessToken = user.generateAccessToken;
+    const newRfreshToken = user.generateRefreshToken;
+
+    user.refreshToken = newRfreshToken;
+    await user.save()
+
+    res
+        .status(200)
+        .cookie("accessToken", newAccessToken, cookieOptions)
+        .cookie("refreshToken", newRfreshToken, cookieOptions)
+        .json(new ApiResponse(200, null, "Access token refreshed successfully"))
+})
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };

@@ -33,3 +33,17 @@ export const validateRegister = [
       "Password must contain at least one special character (@, $, &)",
     ),
 ];
+
+
+export const validateLogin = [
+  body("email")
+    .trim()
+    .notEmpty().withMessage("Email is required")
+    .isEmail().withMessage("Invalid email format")
+    .normalizeEmail(),
+  
+  body("password")
+    .notEmpty().withMessage("Password is required")
+]
+
+

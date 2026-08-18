@@ -8,13 +8,14 @@ import {
 } from "../controllers/client.controller.js";
 import { validateCreateClient } from "../validators/client.validator.js";
 import { validate } from "../middleware/validate.middleware.js";
+import verifyJWT from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.get("/", getClients);
-router.get("/:id", getClientById);
-router.post("/", validateCreateClient, validate, createClient);
-router.patch("/:id", updateClient);
-router.delete("/:id", deleteClient);
+router.get("/",verifyJWT, getClients);
+router.get("/:id",verifyJWT, getClientById);
+router.post("/",verifyJWT, validateCreateClient, validate, createClient);
+router.patch("/:id",verifyJWT, updateClient);
+router.delete("/:id",verifyJWT, deleteClient);
 
 export default router;
