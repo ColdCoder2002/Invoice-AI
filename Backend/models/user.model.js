@@ -18,18 +18,17 @@ const userSchema = new Schema(
       enum: ["owner", "member", "viewer"],
       default: "owner",
     },
+    org:{type:Schema.Types.ObjectId, ref:"Organization"},
     refreshToken: { type: String, select: false },
   },
   { timestamps: true },
 );
 
-// "pre" hook — document save hone se PEHLE ye function chalega
-userSchema.pre("save", async function () {
-  // agar password change/naya nahi hua (jaise sirf 'name' update ho raha hai),
-  // toh dobara hash mat karo — warna already-hashed password ko fir se hash kar dega (bug!)
 
+
+userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
-  this.password = bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, 10);
 });
 
 userSchema.methods.generateAccessToken = function () {

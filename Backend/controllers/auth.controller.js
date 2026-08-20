@@ -3,6 +3,7 @@ import { User } from "../models/user.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
+import Organization from "../models/organization.model.js"; 
 
 const cookieOptions = {
   httpOnly: true,
@@ -18,7 +19,16 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const user = await User.create({ name, email, password });
 
-  const createdUser = await User.findById(user._id);
+  const org = await Organization.create({
+    name: `${name}'s Organization`,
+    owner: user._id,
+    members: []
+  });
+
+  user.org = org._id;
+  await user.save();
+
+  const createdUser = await User.findById(user._id).populate("org");
 
   res.status(201).json(new ApiResponse(201, createdUser, "User Registered!"));
 });
@@ -38,7 +48,7 @@ const loginUser = asyncHandler(async (req, res) => {
   user.refreshToken = refreshToken;
   await user.save();
 
-  const loggedInUser = await User.findById(user._id);
+  const loggedInUser = await User.findById(user._id).populate("org");
 
   res
     .status(200)
