@@ -21,7 +21,7 @@ export const validateRegister = [
     .notEmpty()
     .withMessage("Password is required")
     .isLength({ min: 8 })
-    .withMessage("Pasword must be atleast 6 character")
+    .withMessage("Pasword must be atleast 8 character")
     .matches(/^[A-Z]/)
     .withMessage("Password must start with a capital letter")
     .matches(/(?:.*[0-9]){3,}/)
@@ -34,16 +34,14 @@ export const validateRegister = [
     ),
 ];
 
-
 export const validateLogin = [
   body("email")
     .trim()
-    .notEmpty().withMessage("Email is required")
-    .isEmail().withMessage("Invalid email format")
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Invalid email format")
     .normalizeEmail(),
-  
-  body("password")
-    .notEmpty().withMessage("Password is required")
-]
 
-
+  body("password").notEmpty().withMessage("Password is required"),
+];
