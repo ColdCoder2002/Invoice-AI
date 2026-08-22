@@ -6,9 +6,13 @@ import Client from "../models/client.model.js";
 const getClients = asyncHandler(async (req, res) => {
   const { page = 1, limit = 5, search = "" } = req.query;
 
-  const filter = { org: req.user.org._id }
+  const filter = { org: req.user.org._id, isDeleted:false }
   if (search) {
-    filter.name = {$regex:search, $option:"i"}
+    filter.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { gstin: { $regex: search, $options: "i" } },
+    ];
   }
 
   const clients = await Client.find(filter)
@@ -31,7 +35,7 @@ const getClients = asyncHandler(async (req, res) => {
 });
 
 const getClientById = asyncHandler(async (req, res) => {
-  const client = await Client.findOne({ _id: req.params.id, org: req.user.org._id });
+  const client = await Client.findOne({ _id: req.params.id, org: req.user.org._id, isDeleted:false });
   if (!client) throw new ApiError(404, "Client not found");
   res.status(200).json(new ApiResponse(200, client));
 });
@@ -51,12 +55,13 @@ const updateClient = asyncHandler(async (req, res) => {
 });
 
 const deleteClient = asyncHandler(async (req, res) => {
-  const client = await Client.findOneAndDelete({
-    _id: req.params.id,
-    org: req.user.org._id
-  })
+  const client = await Client.findOneAndUpdate(
+    { _id: req.params.id, org: req.user.org._id, isDeleted: false },
+    { isDeleted: true, deletedAt: new Date() },
+    { new: true }
+  );
   if (!client) throw new ApiError(404, "Client not found");
-  res.status(200).json(new ApiResponse(200, null, "Client deleted"));
+  res.status(200).json(new ApiResponse(200, client, "Client deleted successfully"));
 });
 
 export { getClients, getClientById, createClient, updateClient, deleteClient };
