@@ -1,10 +1,11 @@
 import mongoose, { Schema } from "mongoose"
+import generateInvoiceNo from "../utils/generateInvoiceNo.js"
 
 const lineItemSchema = new Schema({
   description: { type: String, required: true, trim: true },
   quantity: { type: Number, required: true, min: 1 },
   price: { type: Number, required: true, min: 0 },
-})
+}, {toJSON:{virtuals:true}})
 
 lineItemSchema.virtual("amount").get(function () {
   return this.quantity * this.price
@@ -55,6 +56,14 @@ const invoiceSchema = new Schema(
 invoiceSchema.virtual("totalAmount").get(function () {
   return this.lineItems.reduce((sum, item) => sum + (item.quantity * item.price), 0)
 })
+
+
+invoiceSchema.pre("save", async function () {
+  if (!this.invoiceNo) (
+    this.invoiceNo = await generateInvoiceNo(this.org)
+  )
+})
+
 
 invoiceSchema.index({ org: 1, status: 1 })
 invoiceSchema.index({ org: 1, client: 1 })
