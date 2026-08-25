@@ -114,4 +114,44 @@ const deleteInvoice = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, null, "Invoice deleted"))
 })
 
-export { createInvoice, getInvoices, getInvoiceById, updateInvoice, deleteInvoice }
+
+// Update Invoice Status
+const VALID_TRANSITIONS = {
+  draft: ["sent", "cancelled"],
+  sent: ["viewed", "paid", "overdue", "cancelled"],
+  viewed: ["paid", "overdue", "cancelled"],
+  overdue: ["paid", "cancelled"],
+  paid: [],
+  cancelled:[]
+}
+
+const updateInvoiceStatus = asyncHandler(async (req, res) => {
+  const { status: newStatus } = req.body
+  
+  const invoice = await Invoice.findOne({
+    _id: req.params.id,
+    org: req.user.org._id
+  })
+  if (!invoice) throw new ApiError(404, "Invoice not found")
+  
+  const allowedTransitions = VALID_TRANSITIONS[invoice.status]
+  if (!allowedTransitions.includes(newStatus)) {
+    throw new ApiError(
+      400, 
+      `Cannot change status from "${invoice.status}" to "${newStatus}. Allowed: ${allowedTransitions.join(", ") || "none"}"`
+    )
+  }
+
+  invoice.status = newStatus
+  invoice.statusHistory.push({
+    status: newStatus,
+    changedBy: req.user._id,
+    changedAt: new Date()
+  })
+
+  await invoice.save();
+  res.status(200).json(new ApiResponse(200, `Invoice status updated to "${newStatus}"`))
+})
+
+
+export { createInvoice, getInvoices, getInvoiceById, updateInvoice, deleteInvoice, updateInvoiceStatus }

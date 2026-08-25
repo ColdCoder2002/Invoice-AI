@@ -4,7 +4,8 @@ import {
   getInvoices,
   getInvoiceById,
   updateInvoice,
-  deleteInvoice
+  deleteInvoice,
+  updateInvoiceStatus
 } from "../controllers/invoice.controller.js"
 import  verifyJWT  from "../middleware/auth.middleware.js"
 import  authorize  from "../middleware/authorize.middleware.js"
@@ -16,5 +17,6 @@ router.get("/:id", verifyJWT, authorize("owner", "member", "viewer"), getInvoice
 router.post("/", verifyJWT, authorize("owner", "member"), createInvoice)
 router.patch("/:id", verifyJWT, authorize("owner", "member"), updateInvoice)
 router.delete("/:id", verifyJWT, authorize("owner"), deleteInvoice)
+router.patch("/:id/status", verifyJWT, authorize("owner", "member"), updateInvoiceStatus);
 
 export default router
