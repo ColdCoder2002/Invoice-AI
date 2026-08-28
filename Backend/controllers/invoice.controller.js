@@ -1,4 +1,4 @@
-import  Invoice  from "../models/invoice.model.js"
+import Invoice from "../models/invoice.model.js"
 import asyncHandler from "../utils/asyncHandler.js"
 import ApiResponse from "../utils/ApiResponse.js"
 import ApiError from "../utils/ApiError.js"
@@ -122,22 +122,22 @@ const VALID_TRANSITIONS = {
   viewed: ["paid", "overdue", "cancelled"],
   overdue: ["paid", "cancelled"],
   paid: [],
-  cancelled:[]
+  cancelled: []
 }
 
 const updateInvoiceStatus = asyncHandler(async (req, res) => {
   const { status: newStatus } = req.body
-  
+
   const invoice = await Invoice.findOne({
     _id: req.params.id,
     org: req.user.org._id
   })
   if (!invoice) throw new ApiError(404, "Invoice not found")
-  
+
   const allowedTransitions = VALID_TRANSITIONS[invoice.status]
   if (!allowedTransitions.includes(newStatus)) {
     throw new ApiError(
-      400, 
+      400,
       `Cannot change status from "${invoice.status}" to "${newStatus}. Allowed: ${allowedTransitions.join(", ") || "none"}"`
     )
   }
