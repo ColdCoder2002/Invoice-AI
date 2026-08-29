@@ -13,7 +13,7 @@ lineItemSchema.virtual("amount").get(function () {
 
 const invoiceSchema = new Schema(
   {
-    invoiceNo: { type: String, unique: true },
+    invoiceNo: { type: String },
 
     client: {
       type: Schema.Types.ObjectId,
@@ -67,6 +67,7 @@ invoiceSchema.pre("save", async function () {
 
 invoiceSchema.index({ org: 1, status: 1 })
 invoiceSchema.index({ org: 1, client: 1 })
+invoiceSchema.index({ org: 1, invoiceNo: 1 }, { unique: true })
 
 const Invoice = mongoose.model("Invoice", invoiceSchema)
 
